@@ -1,6 +1,8 @@
 ﻿import type { RequestOptions } from '@@/plugin-request/request';
 import type { RequestConfig } from '@umijs/max';
 import { message, notification } from 'antd';
+import {history} from "@@/core/history";
+import {stringify} from "querystring";
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -25,6 +27,8 @@ interface ResponseStructure {
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const errorConfig: RequestConfig = {
+
+
   // 错误处理： umi@3 的错误处理方案。
   errorConfig: {
     // 错误抛出
@@ -86,24 +90,66 @@ export const errorConfig: RequestConfig = {
   },
 
   // 请求拦截器
+  // requestInterceptors: [
+  //   (config: RequestOptions) => {
+  //     // 拦截请求配置，进行个性化处理。
+  //     const url = config?.url?.concat('');
+  //     return { ...config, url };
+  //   },
+  // ],
+
   requestInterceptors: [
     (config: RequestOptions) => {
+
+
       // 拦截请求配置，进行个性化处理。
-      const url = config?.url?.concat('?token = 123');
+      const url = config?.url?.concat('');
+      console.log(`do request url = ${url}`)
       return { ...config, url };
     },
   ],
 
   // 响应拦截器
+  // responseInterceptors: [
+  //   (response) => {
+  //     // 拦截响应数据，进行个性化处理
+  //     const { data } = response as unknown as ResponseStructure;
+  //
+  //     if (data?.success === false) {
+  //       message.error('请求失败！');
+  //     }
+  //     return response;
+  //   },
+  // ],
+
+  // 响应拦截器
   responseInterceptors: [
     (response) => {
       // 拦截响应数据，进行个性化处理
-      const { data } = response as unknown as ResponseStructure;
+      const { data } =  response as unknown as API.BaseResponse<any>;
 
-      if (data?.success === false) {
-        message.error('请求失败！');
+      if (data.code === 0){
+        return response
       }
-      return response;
+
+      if (data.code === 40100){
+        message.error('请先登录')
+        history.replace({
+          pathname: '/user/login',
+          search: stringify({
+            redirect: location.pathname,
+          }),
+        });
+
+      }else{
+        message.error(data.description)
+      }
+
+      return response
     },
   ],
+
+
+
+
 };
